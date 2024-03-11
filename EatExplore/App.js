@@ -1,20 +1,43 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+// App.jsx
+import React, { useState } from 'react';
+import { DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import BottomNavigation from './Components/BottomNav';
+import LoginScreen from './Screens/LoginScreen';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+const Stack = createStackNavigator();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+const theme = {
+  ...DefaultTheme,
+  roundness: 2,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#3498db',
   },
-});
+};
+
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleLogin = () => {
+    // Lógica de autenticación simulada
+    setIsLoggedIn(true);
+  };
+
+  return (
+    <PaperProvider theme={theme}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {!isLoggedIn ? (
+            <Stack.Screen name="Login" component={() => <LoginScreen onLogin={handleLogin} />} />
+          ) : (
+            <Stack.Screen name="Main" component={BottomNavigation} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
+  );
+};
+
+export default App;
