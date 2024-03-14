@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import BottomNavigation from './Components/BottomNav';
 import LoginScreen from './Screens/LoginScreen';
+import ProfileEditorScreen from './Screens/ProfileEditorScreen';
 
 const Stack = createStackNavigator();
 
@@ -34,6 +35,8 @@ const App = () => {
           ) : (
             <Stack.Screen name="Main" component={BottomNavigation} />
           )}
+          {/* Agrega la pantalla ProfileEditor aquí */}
+          <Stack.Screen name="ProfileEditor" component={ProfileEditorScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
