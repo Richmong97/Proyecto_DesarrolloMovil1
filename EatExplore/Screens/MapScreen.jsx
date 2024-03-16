@@ -1,13 +1,16 @@
-import * as React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import MapView, { Marker, Circle, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
+import axios from 'axios';
 
-const PantallaMapa = () => {
-  const [ubicacion, setUbicacion] = React.useState(null);
-  const [ubicacionTocada, setUbicacionTocada] = React.useState(null);
+const MapScreen = () => {
+  const [ubicacion, setUbicacion] = useState(null);
+  const [restaurantes, setRestaurantes] = useState([]);
+  const [error, setError] = useState(null);
+  const [radio, setRadio] = useState(500); // Radio inicial de 5000 metros (5 km)
 
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -17,16 +20,39 @@ const PantallaMapa = () => {
 
       let ubicacionUsuario = await Location.getCurrentPositionAsync({});
       setUbicacion(ubicacionUsuario);
+
+      // Llama a la función para buscar restaurantes
+      buscarRestaurantes(ubicacionUsuario.coords.latitude, ubicacionUsuario.coords.longitude);
     })();
   }, []);
 
+  const buscarRestaurantes = async (latitude, longitude) => {
+    try {
+      if (!latitude || !longitude) {
+        console.error('Ubicación no disponible');
+        return;
+      }
+
+      const apiKey = 'AIzaSyCU8zZPCTDhyDQG_hJBQzrrzyViiPyAa5M'; // Reemplaza con tu propia clave de API de Google Maps
+      const tipo = 'restaurant';
+
+      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radio}&type=${tipo}&key=${apiKey}`;
+
+      const response = await axios.get(url);
+      setRestaurantes(response.data.results);
+    } catch (error) {
+      console.error('Error al obtener los restaurantes:', error);
+      setError(error.message);
+    }
+  };
+
   const manejarPresionMapa = async (e) => {
     const { latitude, longitude } = e.nativeEvent.coordinate;
-    setUbicacionTocada({ latitude, longitude });
+    // Aquí puedes realizar alguna acción con las coordenadas tocadas, si es necesario
   };
 
   return (
-    <View style={styles.contenedor}>
+    <View style={styles.container}>
       {ubicacion && (
         <MapView
           style={styles.mapa}
@@ -60,37 +86,30 @@ const PantallaMapa = () => {
             </Callout>
           </Marker>
 
-          {/* Círculo alrededor de mi ubicación actual */}
+          {/* Marcadores para los restaurantes */}
+          {restaurantes.map((restaurante, index) => (
+            <Marker
+              key={index}
+              coordinate={{
+                latitude: restaurante.geometry.location.lat,
+                longitude: restaurante.geometry.location.lng,
+              }}
+              title={restaurante.name}
+              description={restaurante.vicinity}
+              pinColor="red"
+            />
+          ))}
+
+          {/* Círculo alrededor de la ubicación actual */}
           <Circle
             center={{
               latitude: ubicacion.coords.latitude,
               longitude: ubicacion.coords.longitude,
             }}
-            radius={3000} // Radio en metros (3 km)
+            radius={radio} // Usar el radio definido por el estado
             fillColor="rgba(255, 0, 0, 0.2)"
             strokeColor="rgba(255, 0, 0, 0.5)"
           />
-
-          {/* Marcador para la ubicación tocada (renderizado condicionalmente) */}
-          {ubicacionTocada && (
-            <Marker
-              coordinate={ubicacionTocada}
-              title="Ubicación seleccionada"
-              description="Toca para ver las coordenadas"
-            >
-              <Callout>
-                <View>
-                  <Text style={styles.tituloCallout}>Ubicación</Text>
-                  <Text style={styles.textoCallout}>
-                    Latitud: {ubicacionTocada.latitude.toFixed(6)}
-                  </Text>
-                  <Text style={styles.textoCallout}>
-                    Longitud: {ubicacionTocada.longitude.toFixed(6)}
-                  </Text>
-                </View>
-              </Callout>
-            </Marker>
-          )}
         </MapView>
       )}
     </View>
@@ -98,7 +117,7 @@ const PantallaMapa = () => {
 };
 
 const styles = StyleSheet.create({
-  contenedor: {
+  container: {
     flex: 1,
   },
   mapa: {
@@ -113,4 +132,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PantallaMapa;
+export default MapScreen;
